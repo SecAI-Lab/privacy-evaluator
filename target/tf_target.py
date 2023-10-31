@@ -49,7 +49,7 @@ def load_cifar10():
     )
 
 
-def densenet(num_classes):
+def resnet(num_classes):
     base_model = ResNet50(weights='imagenet', include_top=False)
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
@@ -67,7 +67,7 @@ def densenet(num_classes):
 def train():
     train_data, train_labels, test_data, test_labels = load_cifar10()
     checkpoint_path = 'weights/cifar10_resnet.h5'
-    model = densenet(num_classes=10)
+    model = resnet(num_classes=10)
 
     optimizer = tf.keras.optimizers.Adam()
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
