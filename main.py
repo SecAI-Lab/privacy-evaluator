@@ -1,7 +1,8 @@
 import warnings
 import tensorflow as tf
-from utils.helper import get_attack_inp
+from _utils.helper import get_attack_inp
 from attacks.mia.custom import run_custom_attacks
+from attacks.mia.advanced import train_shadows, run_advanced_attack
 from target.tf_target import load_cifar10
 import os
 
@@ -13,6 +14,7 @@ if __name__ == '__main__':
     model = tf.keras.models.load_model(mpath, compile=False)
 
     tdata = load_cifar10()
-    attack_input = get_attack_inp(model, tdata)
+    train_shadows(model, tdata)
+    # attack_input = get_attack_inp(model, tdata)
 
-    run_custom_attacks(attack_input)
+    # run_custom_attacks(attack_input)

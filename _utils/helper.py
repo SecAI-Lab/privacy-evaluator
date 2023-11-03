@@ -1,6 +1,11 @@
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_structures import AttackInputData
+from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import advanced_mia as amia
+from tensorflow_privacy.privacy.privacy_tests import utils
 from tensorflow.keras.utils import to_categorical
+from typing import Optional
 import tensorflow as tf
+import numpy as np
+
 
 def get_attack_inp(model, tdata):    
     print('Predict on train...')
@@ -33,3 +38,20 @@ def get_attack_inp(model, tdata):
         labels_test=tdata.test_labels
     )
     return attack_input
+
+
+def get_stat_and_loss_aug(model,
+                          x,
+                          y,
+                          sample_weight: Optional[np.ndarray] = None,
+                          batch_size=64):
+  
+  losses, stat = [], []
+  for data in [x, x[:, :, ::-1, :]]:
+    prob = amia.convert_logit_to_prob(
+        model.predict(data, batch_size=batch_size))
+    losses.append(utils.log_loss(y, prob, sample_weight=sample_weight))
+    stat.append(
+        amia.calculate_statistic(
+            prob, y, sample_weight=sample_weight, is_logits=False))
+  return np.vstack(stat).transpose(1, 0), np.vstack(losses).transpose(1, 0)
