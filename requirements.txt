@@ -1,8 +1,2 @@
-nobuco==0.8.7
-numpy==1.26.1
-scikit_learn==1.3.2
-scipy==1.11.3
-tensorflow==2.14.0
-tf_nightly==2.16.0.dev20231026
-torch==2.1.0
-torchvision==0.16.0
+tensorflow_privacy
+tensorrt

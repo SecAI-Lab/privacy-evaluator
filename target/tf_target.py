@@ -24,7 +24,7 @@ def process_images(image, label):
 
 def load_cifar10():
     (train_data, train_labels), (test_data,
-                                 test_labels) = tf.keras.datasets.cifar100.load_data()
+                                 test_labels) = tf.keras.datasets.cifar10.load_data()
     train_ds = tf.data.Dataset.from_tensor_slices((train_data, train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
 
@@ -67,8 +67,8 @@ def densenet(num_classes):
 
 def train():
     tdata = load_cifar10()
-    checkpoint_path = 'weights/cifar100_densenet.h5'
-    model = densenet(num_classes=100)
+    checkpoint_path = 'weights/cifar10_densenet.h5'
+    model = densenet(num_classes=10)
 
     optimizer = tf.keras.optimizers.Adam()
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
