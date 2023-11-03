@@ -79,6 +79,3 @@ def train():
               batch_size=64,
               epochs=20)
     model.save(checkpoint_path)
-
-
-# train()

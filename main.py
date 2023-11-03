@@ -11,10 +11,8 @@ warnings.filterwarnings("ignore")
 if __name__ == '__main__':
     mpath = 'target/weights/cifar10_densenet.h5'
     model = tf.keras.models.load_model(mpath, compile=False)
-    
+
     tdata = load_cifar10()
     attack_input = get_attack_inp(model, tdata)
-    
-    run_custom_attacks(attack_input)
 
-    
+    run_custom_attacks(attack_input)
