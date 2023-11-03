@@ -1,9 +1,10 @@
-import tensorflow as tf
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.models import Model
-from tensorflow.keras.applications import ResNet50
-from typing import Any
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+import tensorflow as tf
 from dataclasses import dataclass
+from typing import Any
+
 """Test file just to prepare TF model"""
 
 
@@ -23,7 +24,7 @@ def process_images(image, label):
 
 def load_cifar10():
     (train_data, train_labels), (test_data,
-                                 test_labels) = tf.keras.datasets.cifar10.load_data()
+                                 test_labels) = tf.keras.datasets.cifar100.load_data()
     train_ds = tf.data.Dataset.from_tensor_slices((train_data, train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
 
@@ -49,8 +50,8 @@ def load_cifar10():
     )
 
 
-def resnet(num_classes):
-    base_model = ResNet50(weights='imagenet', include_top=False)
+def densenet(num_classes):
+    base_model = DenseNet121(weights='imagenet', include_top=False)
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(1024, activation='relu')(x)
@@ -65,16 +66,19 @@ def resnet(num_classes):
 
 
 def train():
-    train_data, train_labels, test_data, test_labels = load_cifar10()
-    checkpoint_path = 'weights/cifar10_resnet.h5'
-    model = resnet(num_classes=10)
+    tdata = load_cifar10()
+    checkpoint_path = 'weights/cifar100_densenet.h5'
+    model = densenet(num_classes=100)
 
     optimizer = tf.keras.optimizers.Adam()
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-    model.fit(train_data,
-              validation_data=test_data,
+    model.fit(tdata.train_data,
+              validation_data=tdata.test_data,
               batch_size=64,
-              epochs=50)
+              epochs=20)
     model.save(checkpoint_path)
+
+
+# train()
