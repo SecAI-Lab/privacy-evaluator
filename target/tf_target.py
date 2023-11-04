@@ -65,9 +65,8 @@ def densenet(num_classes):
     return model
 
 
-def train():
+def train(checkpoint_path):
     tdata = load_cifar10()
-    checkpoint_path = 'weights/cifar10_densenet.h5'
     model = densenet(num_classes=10)
 
     optimizer = tf.keras.optimizers.Adam()

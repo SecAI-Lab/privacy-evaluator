@@ -5,9 +5,10 @@ from tensorflow.keras.utils import to_categorical
 from typing import Optional
 import tensorflow as tf
 import numpy as np
+import os
 
 
-def get_attack_inp(model, tdata):    
+def get_attack_inp(model, tdata):
     print('Predict on train...')
     logits_train = model.predict(tdata.train_data)
     print('Predict on test...')
@@ -45,13 +46,36 @@ def get_stat_and_loss_aug(model,
                           y,
                           sample_weight: Optional[np.ndarray] = None,
                           batch_size=64):
-  
-  losses, stat = [], []
-  for data in [x, x[:, :, ::-1, :]]:
-    prob = amia.convert_logit_to_prob(
-        model.predict(data, batch_size=batch_size))
-    losses.append(utils.log_loss(y, prob, sample_weight=sample_weight))
-    stat.append(
-        amia.calculate_statistic(
-            prob, y, sample_weight=sample_weight, is_logits=False))
-  return np.vstack(stat).transpose(1, 0), np.vstack(losses).transpose(1, 0)
+
+    losses, stat = [], []
+    for data in [x, x[:, :, ::-1, :]]:
+        prob = amia.convert_logit_to_prob(
+            model.predict(data, batch_size=batch_size))
+        losses.append(utils.log_loss(y, prob, sample_weight=sample_weight))
+        stat.append(
+            amia.calculate_statistic(
+                prob, y, sample_weight=sample_weight, is_logits=False))
+    return np.vstack(stat).transpose(1, 0), np.vstack(losses).transpose(1, 0)
+
+
+def plot_curve_with_area(x, y, xlabel, ylabel, ax, label, title=None):
+    ax.plot([0, 1], [0, 1], 'k-', lw=1.0)
+    ax.plot(x, y, lw=2, label=label)
+    ax.set(xlabel=xlabel, ylabel=ylabel)
+    ax.set(aspect=1, xscale='log', yscale='log')
+    ax.title.set_text(title)
+
+
+def is_valid(path):
+    dir_name = None
+    if path.endswith('.h5'):
+        dir_name = path.split('/')[-2]
+
+    if os.path.exists(dir_name) and os.path.isdir(dir_name):
+        print("Creating directory ", dir_name)
+        os.makedirs(dir_name)
+
+    if not os.path.exists(path):
+        return False
+
+    return True
