@@ -15,7 +15,7 @@ def process_images(image, label):
     return image, label
 
 
-def load_cifar10():
+def load_tf_cifar10():
     (train_data, train_labels), (test_data,
                                  test_labels) = tf.keras.datasets.cifar10.load_data()
     x = np.concatenate([train_data, test_data]).astype(np.float32) / 255
@@ -64,7 +64,7 @@ def densenet(num_classes):
 
 
 def train(checkpoint_path):
-    tdata = load_cifar10()
+    tdata = load_tf_cifar10()
     model = densenet(num_classes=10)
 
     optimizer = tf.keras.optimizers.Adam()

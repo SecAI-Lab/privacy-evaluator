@@ -5,13 +5,21 @@ from tensorflow.keras.utils import to_categorical
 from typing import Optional
 import tensorflow as tf
 import numpy as np
+import torch
+
+from target.torch_target import torch_predict
 
 
-def get_attack_inp(model, tdata):
-    print('Predict on train...')
-    logits_train = model.predict(tdata.train_data)
-    print('Predict on test...')
-    logits_test = model.predict(tdata.test_data)
+def get_attack_inp(model, tdata, is_torch):
+    print("Testing started....")
+
+    if not is_torch:
+        logits_train = model.predict(tdata.train_data)
+        logits_test = model.predict(tdata.test_data)
+    else:
+        logits_train, tdata.train_labels = torch_predict(
+            model, tdata.train_data)
+        logits_test, tdata.test_labels = torch_predict(model, tdata.test_data)
 
     print('Apply softmax to get probabilities from logits...')
     prob_train = tf.nn.softmax(logits_train, axis=-1)

@@ -1,7 +1,7 @@
-## Machine Learning Models' Privacy Risk Evaluator
+## Privacy Risk Assessment tool for Machine Learning Models
 
 
-### For Tensorflow Models
+### For Tensorflow (.h5) and Pytorch (.pt) Models
 
 `Must have Python version >= 3.9`  and  `install tensorflow_privacy library`
     
@@ -10,7 +10,7 @@
     --model_path  | MODEL_PATH  Absolute path where pretrained model is saved                            
     --attack      | ATTACK      Attack type: "custom" | "advanced"
 
-For  `advanced attack` change the config file in attacks/config.py
+For `advanced attack` you can change the config file in `attacks/config.py`
 
     aconf = {
         'lr': 0.02,
@@ -21,6 +21,3 @@ For  `advanced attack` change the config file in attacks/config.py
     }
 
 
-### For Pytorch Models
-
-    ## TODO

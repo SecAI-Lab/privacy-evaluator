@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 import numpy as np
 
 
@@ -14,9 +14,9 @@ class AdvAttackData:
 
 @dataclass
 class TData:
-    train_data: Any
-    train_labels: Any
-    test_data: Any
-    test_labels: Any
-    x_concat: np.array
-    y_concat: np.array
+    train_data: Optional[Any] = None
+    train_labels: Optional[Any] = None
+    test_data: Optional[Any] = None
+    test_labels: Optional[Any] = None
+    x_concat: Optional[np.array] = None
+    y_concat: Optional[np.array] = None
