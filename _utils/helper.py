@@ -5,7 +5,6 @@ from tensorflow.keras.utils import to_categorical
 from typing import Optional
 import tensorflow as tf
 import numpy as np
-import os
 
 
 def get_attack_inp(model, tdata):
@@ -64,18 +63,3 @@ def plot_curve_with_area(x, y, xlabel, ylabel, ax, label, title=None):
     ax.set(xlabel=xlabel, ylabel=ylabel)
     ax.set(aspect=1, xscale='log', yscale='log')
     ax.title.set_text(title)
-
-
-def is_valid(path):
-    dir_name = None
-    if path.endswith('.h5'):
-        dir_name = path.split('/')[-2]
-
-    if os.path.exists(dir_name) and os.path.isdir(dir_name):
-        print("Creating directory ", dir_name)
-        os.makedirs(dir_name)
-
-    if not os.path.exists(path):
-        return False
-
-    return True

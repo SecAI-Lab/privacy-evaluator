@@ -1,4 +1,5 @@
 import tensorflow as tf
+import os
 
 from _utils.helper import get_attack_inp, is_valid
 from attacks.mia.custom import run_custom_attacks
@@ -10,8 +11,8 @@ def runner(args):
     mpath = args.model_path
     attack = args.attack
 
-    if not is_valid(mpath):
-        train(mpath)
+    if not os.path.exists(mpath):
+        raise FileExistsError("Model path doesn't exist!")
 
     model = tf.keras.models.load_model(mpath, compile=False)
     tdata = load_cifar10()

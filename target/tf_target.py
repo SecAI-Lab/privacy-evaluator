@@ -2,18 +2,11 @@ from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 import tensorflow as tf
-from dataclasses import dataclass
-from typing import Any
+import numpy as np
+
+from _utils.data import TData
 
 """Test file just to prepare TF model"""
-
-
-@dataclass
-class TData:
-    train_data: Any
-    train_labels: Any
-    test_data: Any
-    test_labels: Any
 
 
 def process_images(image, label):
@@ -25,6 +18,9 @@ def process_images(image, label):
 def load_cifar10():
     (train_data, train_labels), (test_data,
                                  test_labels) = tf.keras.datasets.cifar10.load_data()
+    x = np.concatenate([train_data, test_data]).astype(np.float32) / 255
+    y = np.concatenate([train_labels, test_labels]).astype(np.int32).squeeze()
+
     train_ds = tf.data.Dataset.from_tensor_slices((train_data, train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
 
@@ -46,7 +42,9 @@ def load_cifar10():
         train_data=train_data,
         train_labels=train_labels,
         test_data=test_data,
-        test_labels=test_labels
+        test_labels=test_labels,
+        x_concat=x,
+        y_concat=y
     )
 
 

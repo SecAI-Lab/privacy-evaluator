@@ -14,9 +14,8 @@ import gc
 
 
 def train_shadows(model, tdata):
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
-    x = np.concatenate([x_train, x_test]).astype(np.float32) / 255
-    y = np.concatenate([y_train, y_test]).astype(np.int32).squeeze()
+    x = tdata.x_concat
+    y = tdata.y_concat
 
     seed = 123
     np.random.seed(seed)
@@ -28,12 +27,12 @@ def train_shadows(model, tdata):
     stat = []
     losses = []
 
-    for i in range(aconf['n_shadows'] + 1):
+    for i in range(aconf['n_shadows']):
 
         if aconf['shpath']:
             model_path = os.path.join(
                 aconf['shpath'],
-                f'model{i}_lr{aconf["lr"]}_b{aconf["batch_size"]}_e{aconf["epochs"]}_sd{seed}.h5'
+                f'model{i}_e{aconf["epochs"]}_sd{seed}.h5'
             )
 
         in_indices.append(np.random.binomial(1, 0.5, n).astype(bool))
@@ -44,7 +43,7 @@ def train_shadows(model, tdata):
             print(f'Loaded model #{i} with {in_indices[-1].sum()} examples.')
 
         else:
-            os.makedirs(aconf['shpath'])
+            os.makedirs(aconf['shpath'], exist_ok=True)
             model.compile(
                 optimizer=tf.keras.optimizers.SGD(aconf['lr'], momentum=0.9),
                 loss=tf.keras.losses.SparseCategoricalCrossentropy(
@@ -77,7 +76,7 @@ def train_shadows(model, tdata):
 
 
 def run_advanced_attack(attack_data):
-    for idx in range(aconf['n_shadows'] + 1):
+    for idx in range(aconf['n_shadows']):
         print(f'\nTarget model is #{idx}')
         stat_target = attack_data.stat[idx]
         in_indices_target = attack_data.in_indices[idx]
