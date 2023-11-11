@@ -1,70 +1,70 @@
-from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import advanced_mia as amia
-from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import plotting as mia_plotting
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import membership_inference_attack as mia
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_structures import AttackInputData
+from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import plotting as mia_plotting
+from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import advanced_mia as amia
 import matplotlib.pyplot as plt
-from attacks.config import aconf
-from _utils.helper import get_stat_and_loss_aug, plot_curve_with_area
-from _utils.data import AdvAttackData
-import numpy as np
 import tensorflow as tf
+import numpy as np
 import functools
+import torch
 import os
 import gc
 
+from _utils.helper import get_stat_and_loss_aug, plot_curve_with_area
+from _utils.data import AdvAttackData
+from attacks.config import aconf
+from target.tf_target import train
+from target.torch_target import torch_train
 
-def train_shadows(model, tdata):
+seed = 123
+np.random.seed(seed)
+
+
+def get_shadow_stats(model, tdata, is_torch=False):
     x = tdata.x_concat
     y = tdata.y_concat
-
-    seed = 123
-    np.random.seed(seed)
-
-    sample_weight = None
     n = x.shape[0]
+    sample_weight = None
+    ext = 'h5'
+    in_indices, stat, losses = [], [], []
+    os.makedirs(aconf['shpath'], exist_ok=True)
 
-    in_indices = []
-    stat = []
-    losses = []
+    if is_torch:
+        ext = 'pt'
 
     for i in range(aconf['n_shadows']):
-
-        if aconf['shpath']:
-            model_path = os.path.join(
-                aconf['shpath'],
-                f'model{i}_e{aconf["epochs"]}_sd{seed}.h5'
-            )
-
         in_indices.append(np.random.binomial(1, 0.5, n).astype(bool))
+        model_path = os.path.join(
+            aconf['shpath'],  f'model{i}_e{aconf["epochs"]}_sd{seed}.{ext}'
+        )
 
-        if aconf['shpath'] and os.path.exists(model_path):
-            model(x[:1])
-            model.load_weights(model_path)
+        if os.path.exists(model_path):
+            if is_torch:
+                model.load_state_dict(torch.load(model_path))
+            else:
+                model(x[:1])
+                model.load_weights(model_path)
             print(f'Loaded model #{i} with {in_indices[-1].sum()} examples.')
 
         else:
-            os.makedirs(aconf['shpath'], exist_ok=True)
-            model.compile(
-                optimizer=tf.keras.optimizers.SGD(aconf['lr'], momentum=0.9),
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(
-                    from_logits=True),
-                metrics=['accuracy'])
-            model.fit(
-                x[in_indices[-1]],
-                y[in_indices[-1]],
-                validation_data=(x[~in_indices[-1]], y[~in_indices[-1]]),
-                epochs=aconf['epochs'],
-                batch_size=aconf['batch_size'],
-                verbose=2)
-            if aconf['shpath']:
-                model.save_weights(model_path)
+            tdata.train_data = x[in_indices[-1]]
+            tdata.train_labels = y[in_indices[-1]]
+            tdata.test_data = x[~in_indices[-1]]
+            tdata.test_labels = y[~in_indices[-1]]
+
+            if is_torch:
+                torch_train(model, tdata, model_path)
+            else:
+                train(model_path, tdata=tdata, model=model)
             print(f'Trained model #{i} with {in_indices[-1].sum()} examples.')
 
-        s, l = get_stat_and_loss_aug(model, x, y, sample_weight)
+        s, l = get_stat_and_loss_aug(
+            model, x, y, sample_weight, is_torch=is_torch)
+
         stat.append(s)
         losses.append(l)
-        tf.keras.backend.clear_session()
-        gc.collect()
+        # tf.keras.backend.clear_session()
+        # gc.collect()
 
     return AdvAttackData(
         stat=stat,
@@ -75,7 +75,7 @@ def train_shadows(model, tdata):
     )
 
 
-def run_advanced_attack(attack_data):
+def run_advanced_attack(attack_data, is_torch):
     for idx in range(aconf['n_shadows']):
         print(f'\nTarget model is #{idx}')
         stat_target = attack_data.stat[idx]

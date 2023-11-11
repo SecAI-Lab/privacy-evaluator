@@ -1,12 +1,13 @@
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 import tensorflow as tf
 import numpy as np
 
+from attacks.config import aconf
 from _utils.data import TData
 
-"""Test file just to prepare TF model"""
+"""Test file preparing TF model"""
 
 
 def process_images(image, label):
@@ -18,6 +19,7 @@ def process_images(image, label):
 def load_tf_cifar10():
     (train_data, train_labels), (test_data,
                                  test_labels) = tf.keras.datasets.cifar10.load_data()
+
     x = np.concatenate([train_data, test_data]).astype(np.float32) / 255
     y = np.concatenate([train_labels, test_labels]).astype(np.int32).squeeze()
 
@@ -63,16 +65,25 @@ def densenet(num_classes):
     return model
 
 
-def train(checkpoint_path):
-    tdata = load_tf_cifar10()
-    model = densenet(num_classes=10)
+def train(checkpoint_path, tdata=None, model=None):
+    optimizer = tf.keras.optimizers.SGD(aconf['lr'], momentum=0.9)
 
-    optimizer = tf.keras.optimizers.Adam()
+    if tdata is None:
+        tdata = load_tf_cifar10()
+
+    if model is None:
+        model = densenet(num_classes=10)
+        optimizer = tf.keras.optimizers.Adam()
+
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
     model.fit(tdata.train_data,
               validation_data=tdata.test_data,
-              batch_size=64,
-              epochs=20)
-    model.save(checkpoint_path)
+              batch_size=aconf['batch_size'],
+              epochs=aconf['epochs'])
+
+    if model == None:
+        model.save(checkpoint_path)
+    else:
+        model.save_weights(checkpoint_path)

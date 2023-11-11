@@ -5,7 +5,6 @@ from tensorflow.keras.utils import to_categorical
 from typing import Optional
 import tensorflow as tf
 import numpy as np
-import torch
 
 from target.torch_target import torch_predict
 
@@ -17,9 +16,9 @@ def get_attack_inp(model, tdata, is_torch):
         logits_train = model.predict(tdata.train_data)
         logits_test = model.predict(tdata.test_data)
     else:
-        logits_train, tdata.train_labels = torch_predict(
+        logits_train = torch_predict(
             model, tdata.train_data)
-        logits_test, tdata.test_labels = torch_predict(model, tdata.test_data)
+        logits_test = torch_predict(model, tdata.test_data)
 
     print('Apply softmax to get probabilities from logits...')
     prob_train = tf.nn.softmax(logits_train, axis=-1)
@@ -52,17 +51,25 @@ def get_stat_and_loss_aug(model,
                           x,
                           y,
                           sample_weight: Optional[np.ndarray] = None,
-                          batch_size=64):
+                          batch_size=64,
+                          is_torch=False):
 
     losses, stat = [], []
+    print('Computing stats from loss and logits....')
     for data in [x, x[:, :, ::-1, :]]:
-        prob = amia.convert_logit_to_prob(
-            model.predict(data, batch_size=batch_size))
-        losses.append(utils.log_loss(y, prob, sample_weight=sample_weight))
+        if is_torch:
+            logits = torch_predict(model, data.copy())
+        else:
+            logits = model.predict(data, batch_size=batch_size)
+        prob = amia.convert_logit_to_prob(logits)
+        losses.append(utils.log_loss(
+            y, prob, sample_weight=sample_weight))
+
         stat.append(
             amia.calculate_statistic(
                 prob, y, sample_weight=sample_weight, is_logits=False))
-    return np.vstack(stat).transpose(1, 0), np.vstack(losses).transpose(1, 0)
+
+    return np.vstack(stat.copy()).transpose(1, 0), np.vstack(losses.copy()).transpose(1, 0)
 
 
 def plot_curve_with_area(x, y, xlabel, ylabel, ax, label, title=None):

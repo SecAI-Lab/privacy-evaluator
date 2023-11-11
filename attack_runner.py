@@ -1,5 +1,5 @@
-import os
 import torch
+import os
 
 
 def runner(args):
@@ -19,7 +19,7 @@ def runner(args):
 
     from _utils.helper import get_attack_inp
     from attacks.mia.custom import run_custom_attacks
-    from attacks.mia.advanced import train_shadows, run_advanced_attack
+    from attacks.mia.advanced import get_shadow_stats, run_advanced_attack
     from target.tf_target import load_tf_cifar10
     from target.torch_target import load_torch_cifar10
 
@@ -33,7 +33,7 @@ def runner(args):
         run_custom_attacks(attack_input)
 
     elif attack == 'advanced':
-        adata = train_shadows(model, tdata)
+        adata = get_shadow_stats(model, tdata, is_torch)
         run_advanced_attack(adata, is_torch)
 
     else:
