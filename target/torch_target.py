@@ -48,8 +48,8 @@ def load_torch_cifar10():
     return TData(
         train_data=trainset.data,
         test_data=testset.data,
-        train_labels=trainset.targets,
-        test_labels=testset.targets,
+        train_labels=np.array(trainset.targets),
+        test_labels=np.array(testset.targets),
         x_concat=x,
         y_concat=y
     )
@@ -63,7 +63,7 @@ def torch_predict(model, dataset):
         x = x.to(device)
         if x.shape[0] > 3:
             x = torch.transpose(x, 1, -1)
-        pred = model(x)
+        pred = model(x.float())
         pred = pred.cpu().detach().numpy().copy()
         logits.append(pred)
     logits = np.array(logits)
