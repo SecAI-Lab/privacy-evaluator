@@ -7,7 +7,7 @@ import numpy as np
 from attacks.config import aconf
 from _utils.data import TData
 
-"""Test file preparing TF model"""
+"""Test file for preparing TF model"""
 
 
 def process_images(image, label):
@@ -25,25 +25,25 @@ def load_tf_cifar10():
 
     train_ds = tf.data.Dataset.from_tensor_slices((train_data, train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
-
     train_ds_size = tf.data.experimental.cardinality(train_ds).numpy()
     test_ds_size = tf.data.experimental.cardinality(test_ds).numpy()
-    train_data = (train_ds
-                  .map(process_images)
-                  .shuffle(buffer_size=train_ds_size)
-                  .batch(batch_size=100, drop_remainder=False))
-    test_data = (test_ds
-                 .map(process_images)
-                 .shuffle(buffer_size=test_ds_size)
-                 .batch(batch_size=10, drop_remainder=False))
+
+    train_ds = (train_ds
+                .map(process_images)
+                .shuffle(buffer_size=train_ds_size)
+                .batch(batch_size=100, drop_remainder=False))
+    test_ds = (test_ds
+               .map(process_images)
+               .shuffle(buffer_size=test_ds_size)
+               .batch(batch_size=10, drop_remainder=False))
 
     train_labels = train_labels.flatten()
     test_labels = test_labels.flatten()
 
     return TData(
-        train_data=train_data,
+        train_data=train_ds,
         train_labels=train_labels,
-        test_data=test_data,
+        test_data=test_ds,
         test_labels=test_labels,
         x_concat=x,
         y_concat=y
@@ -66,7 +66,8 @@ def densenet(num_classes):
 
 
 def train(checkpoint_path, tdata=None, model=None):
-    optimizer = tf.keras.optimizers.SGD(aconf['lr'], momentum=0.9)
+    optimizer = tf.keras.optimizers.SGD(
+        learning_rate=aconf['lr'], momentum=0.9)
 
     if tdata is None:
         tdata = load_tf_cifar10()
@@ -78,12 +79,14 @@ def train(checkpoint_path, tdata=None, model=None):
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-    model.fit(tdata.train_data,
-              validation_data=tdata.test_data,
+    model.fit(tdata.train_data, tdata.train_labels,
+              validation_data=(tdata.test_data, tdata.test_labels),
               batch_size=aconf['batch_size'],
               epochs=aconf['epochs'])
 
     if model == None:
+        print("Saving whole model...")
         model.save(checkpoint_path)
     else:
+        print("Saving model weights...")
         model.save_weights(checkpoint_path)

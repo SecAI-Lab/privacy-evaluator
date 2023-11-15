@@ -19,7 +19,8 @@ def runner(args):
 
     from _utils.helper import get_attack_inp
     from attacks.mia.custom import run_custom_attacks
-    from attacks.mia.advanced import get_shadow_stats, run_advanced_attack
+    from attacks.mia.lira import get_shadow_stats, run_advanced_attack
+    from attacks.mia.metric import run_population_metric
     from target.tf_target import load_tf_cifar10
     from target.torch_target import load_torch_cifar10
 
@@ -32,9 +33,12 @@ def runner(args):
         attack_input = get_attack_inp(model, tdata, is_torch)
         run_custom_attacks(attack_input)
 
-    elif attack == 'advanced':
+    elif attack == 'lira':
         adata = get_shadow_stats(model, tdata, is_torch)
-        run_advanced_attack(adata, is_torch)
+        run_advanced_attack(adata)
+
+    elif attack == 'population':
+        run_population_metric(tdata, model)
 
     else:
         raise NotImplementedError('The other type of attacks not implemented!')

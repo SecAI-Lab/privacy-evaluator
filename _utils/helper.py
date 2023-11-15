@@ -6,11 +6,13 @@ from typing import Optional
 import tensorflow as tf
 import numpy as np
 
+from privacy_meter.dataset import Dataset
+
 from target.torch_target import torch_predict
 
 
 def get_attack_inp(model, tdata, is_torch):
-    print("Testing started....")
+    print("Collecting prediction stats....")
 
     if not is_torch:
         logits_train = model.predict(tdata.train_data)
@@ -36,7 +38,7 @@ def get_attack_inp(model, tdata, is_torch):
     loss_test = cce(constant(y_test_onehot), constant(
         prob_test), from_logits=False).numpy()
 
-    attack_input = AttackInputData(
+    adata = AttackInputData(
         logits_train=logits_train,
         logits_test=logits_test,
         loss_train=loss_train,
@@ -44,7 +46,7 @@ def get_attack_inp(model, tdata, is_torch):
         labels_train=tdata.train_labels,
         labels_test=tdata.test_labels
     )
-    return attack_input
+    return adata
 
 
 def get_stat_and_loss_aug(model,
@@ -70,6 +72,21 @@ def get_stat_and_loss_aug(model,
                 prob, y, sample_weight=sample_weight, is_logits=False))
 
     return np.vstack(stat.copy()).transpose(1, 0), np.vstack(losses.copy()).transpose(1, 0)
+
+
+def get_trg_ref_data(tdata):
+    train_ds = {'x': tdata.train_data, 'y': tdata.train_labels}
+    test_ds = {'x': tdata.test_data, 'y': tdata.test_labels}
+    target_dataset = Dataset(
+        data_dict={'train': train_ds, 'test': test_ds},
+        default_input='x', default_output='y'
+    )
+    population_ds = {'x': tdata.x_concat, 'y': tdata.y_concat}
+    reference_dataset = Dataset(
+        data_dict={'train': population_ds},
+        default_input='x', default_output='y'
+    )
+    return target_dataset, reference_dataset
 
 
 def plot_curve_with_area(x, y, xlabel, ylabel, ax, label, title=None):

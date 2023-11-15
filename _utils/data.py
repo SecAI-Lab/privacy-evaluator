@@ -18,5 +18,5 @@ class TData:
     train_labels: Optional[Any] = None
     test_data: Optional[Any] = None
     test_labels: Optional[Any] = None
-    x_concat: Optional[np.array] = None
-    y_concat: Optional[np.array] = None
+    x_concat: Optional[np.ndarray] = None
+    y_concat: Optional[np.ndarray] = None

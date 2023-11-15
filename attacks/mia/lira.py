@@ -63,8 +63,8 @@ def get_shadow_stats(model, tdata, is_torch=False):
 
         stat.append(s)
         losses.append(l)
-        # tf.keras.backend.clear_session()
-        # gc.collect()
+        tf.keras.backend.clear_session()
+        gc.collect()
 
     return AdvAttackData(
         stat=stat,
@@ -75,7 +75,7 @@ def get_shadow_stats(model, tdata, is_torch=False):
     )
 
 
-def run_advanced_attack(attack_data, is_torch):
+def run_advanced_attack(attack_data):
     for idx in range(aconf['n_shadows']):
         print(f'\nTarget model is #{idx}')
         stat_target = attack_data.stat[idx]

@@ -22,4 +22,8 @@
 
          PPV=TP/(TP+FP)
 
-### 2. AUC - `Area Under Curve` 
+### 3. AUC - `Area Under Curve` 
+
+### 4. LiRA via Offset
+
+### 4. LiRA via Offset
