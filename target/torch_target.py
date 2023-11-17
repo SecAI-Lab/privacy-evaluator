@@ -5,10 +5,8 @@ from tqdm import tqdm
 import numpy as np
 import torch
 
-from attacks.config import aconf
+from attacks.config import aconf, device
 from _utils.data import TData
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def ds_to_numpy(trainset, testset):
