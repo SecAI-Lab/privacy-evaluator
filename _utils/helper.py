@@ -9,6 +9,7 @@ import numpy as np
 from privacy_meter.dataset import Dataset
 
 from target.torch_target import torch_predict
+from attacks.config import priv_meter as pm
 
 
 def get_attack_inp(model, tdata, is_torch):
@@ -75,13 +76,36 @@ def get_stat_and_loss_aug(model,
 
 
 def get_trg_ref_data(tdata):
-    train_ds = {'x': tdata.train_data, 'y': tdata.train_labels}
-    test_ds = {'x': tdata.test_data, 'y': tdata.test_labels}
+    x_train_all = tdata.train_data
+    x_test_all = tdata.test_data
+
+    if not isinstance(tdata.train_data, np.ndarray):
+        x_train_all = np.concatenate(
+            [data for data, _ in tdata.train_data], axis=0)
+        x_test_all = np.concatenate(
+            [data for data, _ in tdata.test_data], axis=0)
+
+    y_train_all = tf.keras.utils.to_categorical(
+        tdata.train_labels, pm['num_classes'])
+    y_test_all = tf.keras.utils.to_categorical(
+        tdata.test_labels, pm['num_classes'])
+
+    x_train, y_train = x_train_all[:pm['num_train_points']
+                                   ], y_train_all[:pm['num_train_points']]
+    x_test, y_test = x_test_all[:pm['num_test_points']
+                                ], y_test_all[:pm['num_test_points']]
+    x_population = x_train_all[pm['num_train_points']:(
+        pm['num_train_points'] + pm['num_population_points'])]
+    y_population = y_train_all[pm['num_train_points']:(
+        pm['num_train_points'] + pm['num_population_points'])]
+
+    train_ds = {'x': x_train, 'y': y_train}
+    test_ds = {'x': x_test, 'y': y_test}
     target_dataset = Dataset(
         data_dict={'train': train_ds, 'test': test_ds},
         default_input='x', default_output='y'
     )
-    population_ds = {'x': tdata.x_concat, 'y': tdata.y_concat}
+    population_ds = {'x': x_population, 'y': y_population}
     reference_dataset = Dataset(
         data_dict={'train': population_ds},
         default_input='x', default_output='y'

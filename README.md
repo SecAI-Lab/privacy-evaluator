@@ -8,9 +8,9 @@
     Arguments for running  `main.py`
     
     --model_path  | MODEL_PATH  Absolute path where pretrained model is saved                            
-    --attack      | ATTACK      Attack type: "custom" | "advanced"
+    --attack      | ATTACK      Attack type: "custom" | "lira"
 
-For `advanced attack` you can change the config file in `attacks/config.py`
+For `lira attack` you can change the config file in `attacks/config.py`
 
     aconf = {
         'lr': 0.02,

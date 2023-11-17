@@ -38,7 +38,7 @@ def runner(args):
         run_advanced_attack(adata)
 
     elif attack == 'population':
-        run_population_metric(tdata, model)
+        run_population_metric(tdata, model, is_torch)
 
     else:
         raise NotImplementedError('The other type of attacks not implemented!')
