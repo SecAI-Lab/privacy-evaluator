@@ -1,8 +1,6 @@
 from privacy_meter.information_source import InformationSource
 from privacy_meter.audit import Audit, MetricEnum
 from privacy_meter.constants import InferenceGame
-import tensorflow as tf
-import torch
 
 from _utils.wrapper_model import WrapperTF, WrapperTorch
 from _utils.helper import get_trg_ref_data
@@ -13,10 +11,10 @@ def run_population_metric(tdata, model, is_torch):
     target_dataset, reference_dataset = get_trg_ref_data(tdata)
     if is_torch:
         target_model = WrapperTorch(
-            model_obj=model, loss_fn=torch.nn.CrossEntropyLoss())
+            model_obj=model, loss_fn=pm['torch_loss'])
     else:
         target_model = WrapperTF(
-            model_obj=model, loss_fn=tf.keras.losses.CategoricalCrossentropy())
+            model_obj=model, loss_fn=pm['tf_loss'])
 
     target_info_source = InformationSource(
         models=[target_model],
@@ -37,6 +35,6 @@ def run_population_metric(tdata, model, is_torch):
     print("Preparing population metric attack....")
     audit_obj.prepare()
 
-    print("Started population metric attack....")
+    print("Starting population metric attack....")
     audit_results = audit_obj.run()[0]
     print(audit_results[0])

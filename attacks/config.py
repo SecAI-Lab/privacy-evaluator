@@ -1,4 +1,6 @@
+import tensorflow as tf
 import torch
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 aconf = {
@@ -17,5 +19,9 @@ priv_meter = {
     'batch_size': 64,
     'num_population_points': 10000,
     'fpr_tolerance_list': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-    'input_shape': (224, 224, 3)
+    'input_shape': (224, 224, 3),
+    'ref_models': './attacks/shadows/',
+    'torch_loss': torch.nn.CrossEntropyLoss(),
+    'tf_loss': tf.keras.losses.CategoricalCrossentropy()
+
 }
