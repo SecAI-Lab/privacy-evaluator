@@ -1,4 +1,4 @@
-## Tensorflow Privacy - MIA Risc Scores
+## Tensorflow Privacy - MIA Risk Scores
 
 ### 1. Adv - `Membership Advantage`
 
@@ -22,8 +22,20 @@
 
          PPV=TP/(TP+FP)
 
-### 3. AUC - `Area Under Curve` 
+### 3. LiRA with Gaussian
+   > To minimize the number of shadow models necessary, it is assumed `Q˜in/out` to be a Gaussian distribution, reducing the attack to estimating just four parameters: the mean and variance of each distribution.
+   The critical difference between LiRA and other prior attacks is that they use a more efficient parametric approach, that models the distribution of losses as Gaussians.
+   MIA is computed with scored Loss values sampled over Gaussian ditribution.
 
-### 4. LiRA via Offset
+      Calling API:
+         scores = amia.compute_score_lira(stat_target, stat_in, stat_out, fix_variance=True)
 
-### 4. LiRA via Offset
+### 4. LiRA with Offset
+   > Computed as negative scores of Loss values
+
+      Calling API:
+         scores = -amia.compute_score_lira(stat_target, stat_in, stat_out)
+
+### 5. LiRA Baseline
+   > Naively computes MIA from losses from the prediction of Target model for member and non-member data. 
+

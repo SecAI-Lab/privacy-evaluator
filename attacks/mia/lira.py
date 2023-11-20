@@ -89,6 +89,7 @@ def run_advanced_attack(attack_data):
         stat_out = [stat_shadow[:, j][~in_indices_shadow[:, j]]
                     for j in range(attack_data.n)]
 
+        # Computing LiRA gaussian
         scores = amia.compute_score_lira(
             stat_target, stat_in, stat_out, fix_variance=True)
 
@@ -99,40 +100,29 @@ def run_advanced_attack(attack_data):
             sample_weight_test=attack_data.sample_weight)
         result_lira = mia.run_attacks(attack_input).single_attack_results[0]
 
-        print('\nAdvanced MIA attack with Gaussian:',
+        print('\nLiRA attack with Gaussian:',
               f'auc = {result_lira.get_auc():.4f}',
               f'adv = {result_lira.get_attacker_advantage():.4f}')
 
+        # Computing LiRA offset
         scores = -amia.compute_score_offset(stat_target, stat_in, stat_out)
-        attack_input = AttackInputData(
-            loss_train=scores[in_indices_target],
-            loss_test=scores[~in_indices_target],
-            sample_weight_train=attack_data.sample_weight,
-            sample_weight_test=attack_data.sample_weight)
+        attack_input.loss_train = scores[in_indices_target]
+        attack_input.loss_test = scores[~in_indices_target]
+
         result_offset = mia.run_attacks(attack_input).single_attack_results[0]
 
-        print('\nAdvanced MIA attack with offset:',
+        print('\nLiRA attack with offset:',
               f'auc = {result_offset.get_auc():.4f}',
               f'adv = {result_offset.get_attacker_advantage():.4f}')
 
+        # Computing LiRA baseline
         loss_target = attack_data.losses[idx][:, 0]
-        attack_input = AttackInputData(
-            loss_train=loss_target[in_indices_target],
-            loss_test=loss_target[~in_indices_target],
-            sample_weight_train=attack_data.sample_weight,
-            sample_weight_test=attack_data.sample_weight)
+        attack_input.loss_train = loss_target[in_indices_target]
+        attack_input.loss_test = loss_target[~in_indices_target]
+
         result_baseline = mia.run_attacks(
             attack_input).single_attack_results[0]
 
-        print('\nBaseline MIA attack:', f'auc = {result_baseline.get_auc():.4f}',
+        print('\nLiRA baseline attack:',
+              f'auc = {result_baseline.get_auc():.4f}',
               f'adv = {result_baseline.get_attacker_advantage():.4f}')
-
-    _, ax = plt.subplots(1, 1, figsize=(5, 5))
-    for res, title in zip([result_baseline, result_lira, result_offset],
-                          ['baseline', 'LiRA', 'offset']):
-        label = f'{title} auc={res.get_auc():.4f}'
-        mia_plotting.plot_roc_curve(
-            res.roc_curve,
-            functools.partial(plot_curve_with_area, ax=ax, label=label))
-    plt.legend()
-    plt.savefig('advanced_mia.png')
