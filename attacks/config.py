@@ -23,5 +23,4 @@ priv_meter = {
     'ref_models': './attacks/shadows/',
     'torch_loss': torch.nn.CrossEntropyLoss(),
     'tf_loss': tf.keras.losses.CategoricalCrossentropy()
-
 }

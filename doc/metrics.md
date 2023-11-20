@@ -23,18 +23,19 @@
          PPV=TP/(TP+FP)
 
 ### 3. LiRA with Gaussian
-   > To minimize the number of shadow models necessary, it is assumed `Q˜in/out` to be a Gaussian distribution, reducing the attack to estimating just four parameters: the mean and variance of each distribution.
+   > To minimize the number of shadow models, it is assumed `Q˜in/out` to be a Gaussian distribution, reducing the attack to estimating just four parameters: the mean and variance of each distribution.
    The critical difference between LiRA and other prior attacks is that they use a more efficient parametric approach, that models the distribution of losses as Gaussians.
-   MIA is computed with scored Loss values sampled over Gaussian ditribution.
+   MIA is computed with scored loss values sampled over Gaussian ditribution.
 
       Calling API:
          scores = amia.compute_score_lira(stat_target, stat_in, stat_out, fix_variance=True)
 
 ### 4. LiRA with Offset
-   > Computed as negative scores of Loss values
+   > MIA is computed from loss score of each sample as `stat_target - some offset`, where `offset` is
+    computed with stat_in, stat_out, or both depending on the option. The relation between the score and the membership depends on that between stat_target and membership.
 
       Calling API:
-         scores = -amia.compute_score_lira(stat_target, stat_in, stat_out)
+         scores = -amia.compute_score_offset(stat_target, stat_in, stat_out)
 
 ### 5. LiRA Baseline
    > Naively computes MIA from losses from the prediction of Target model for member and non-member data. 
