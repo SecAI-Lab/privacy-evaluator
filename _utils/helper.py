@@ -75,7 +75,7 @@ def get_stat_and_loss_aug(model,
     return np.vstack(stat.copy()).transpose(1, 0), np.vstack(losses.copy()).transpose(1, 0)
 
 
-def get_trg_ref_data(tdata):
+def get_trg_ref_data(tdata, population=False):
     x_train_all = tdata.train_data
     x_test_all = tdata.test_data
 
@@ -94,23 +94,30 @@ def get_trg_ref_data(tdata):
                                    ], y_train_all[:pm['num_train_points']]
     x_test, y_test = x_test_all[:pm['num_test_points']
                                 ], y_test_all[:pm['num_test_points']]
-    x_population = x_train_all[pm['num_train_points']:(
-        pm['num_train_points'] + pm['num_population_points'])]
-    y_population = y_train_all[pm['num_train_points']:(
-        pm['num_train_points'] + pm['num_population_points'])]
 
     train_ds = {'x': x_train, 'y': y_train}
     test_ds = {'x': x_test, 'y': y_test}
+
     target_dataset = Dataset(
         data_dict={'train': train_ds, 'test': test_ds},
         default_input='x', default_output='y'
     )
-    population_ds = {'x': x_population, 'y': y_population}
-    reference_dataset = Dataset(
-        data_dict={'train': population_ds},
-        default_input='x', default_output='y'
-    )
-    return target_dataset, reference_dataset
+
+    if not population:
+        return target_dataset
+
+    else:
+        x_population = x_train_all[pm['num_train_points']:(
+            pm['num_train_points'] + pm['num_population_points'])]
+        y_population = y_train_all[pm['num_train_points']:(
+            pm['num_train_points'] + pm['num_population_points'])]
+
+        population_ds = {'x': x_population, 'y': y_population}
+        reference_dataset = Dataset(
+            data_dict={'train': population_ds},
+            default_input='x', default_output='y'
+        )
+        return target_dataset, reference_dataset
 
 
 def plot_curve_with_area(x, y, xlabel, ylabel, ax, label, title=None):

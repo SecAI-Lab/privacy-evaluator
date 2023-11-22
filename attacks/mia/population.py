@@ -8,7 +8,8 @@ from attacks.config import priv_meter as pm
 
 
 def run_population_metric(tdata, model, is_torch):
-    target_dataset, reference_dataset = get_trg_ref_data(tdata)
+    target_dataset, reference_dataset = get_trg_ref_data(
+        tdata, population=True)
     if is_torch:
         target_model = WrapperTorch(
             model_obj=model, loss_fn=pm['torch_loss'])
@@ -30,7 +31,8 @@ def run_population_metric(tdata, model, is_torch):
         inference_game_type=InferenceGame.PRIVACY_LOSS_MODEL,
         target_info_sources=target_info_source,
         reference_info_sources=reference_info_source,
-        fpr_tolerances=pm['fpr_tolerance_list']
+        fpr_tolerances=pm['fpr_tolerance_list'],
+        # save_logs=False
     )
     print("Preparing population metric attack....")
     audit_obj.prepare()

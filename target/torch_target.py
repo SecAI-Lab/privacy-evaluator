@@ -64,8 +64,8 @@ def torch_predict(model, dataset):
         pred = model(x.float())
         pred = pred.cpu().detach().numpy().copy()
         logits.append(pred)
-    logits = np.array(logits)
-    return np.concatenate(logits.copy(), axis=0)
+    logits = np.concatenate(np.array(logits).copy(), axis=0)
+    return logits
 
 
 def torch_train(model, dataset, checkpoint_path=None):

@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', default=mpath,
                         help='Absolute path where pretrained model is saved')
     parser.add_argument('--attack', default='custom',
-                        help='Attack type: "custom" | "lira" | "population" | "reference" ')
+                        help='Attack type: "custom" | "lira" | "population" | "reference" | "shadow" ')
     args = parser.parse_args()
 
     pprint.pprint(args)

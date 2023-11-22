@@ -10,7 +10,7 @@ from attacks.config import priv_meter as pm
 
 
 def run_reference_metric(tdata, model, is_torch):
-    target_dataset, _ = get_trg_ref_data(tdata)
+    target_dataset = get_trg_ref_data(tdata)
 
     ref_path = os.listdir(pm['ref_models'])
     ref_models = []
@@ -24,7 +24,7 @@ def run_reference_metric(tdata, model, is_torch):
 
     for reference in ref_path:
         if reference.endswith(suff):
-            fpath = pm['ref_models']+reference
+            fpath = pm['ref_models'] + reference
             if is_torch:
                 model.load_state_dict(torch.load(fpath))
                 ref_models.append(WrapperTorch(
@@ -49,7 +49,8 @@ def run_reference_metric(tdata, model, is_torch):
         inference_game_type=InferenceGame.PRIVACY_LOSS_MODEL,
         target_info_sources=target_info_source,
         reference_info_sources=reference_info_source,
-        fpr_tolerances=pm['fpr_tolerance_list']
+        fpr_tolerances=pm['fpr_tolerance_list'],
+        # save_logs=False
     )
     print("Preparing reference metric attack....")
     audit_obj.prepare()
