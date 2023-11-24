@@ -1,17 +1,14 @@
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import membership_inference_attack as mia
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_structures import AttackInputData
-from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import plotting as mia_plotting
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import advanced_mia as amia
-import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
-import functools
 import torch
 import os
 import gc
 
-from _utils.helper import get_stat_and_loss_aug, plot_curve_with_area
-from _utils.data import AdvAttackData
+from _utils.helper import get_stat_and_loss_aug
+from _utils.data import ShadowStats
 from attacks.config import aconf
 from target.tf_target import train
 from target.torch_target import torch_train
@@ -37,14 +34,15 @@ def get_shadow_stats(model, tdata, is_torch=False):
         model_path = os.path.join(
             aconf['shpath'],  f'model{i}_e{aconf["epochs"]}_sd{seed}.{ext}'
         )
-
+        # TODO: change model loading without initilization
         if os.path.exists(model_path):
             if is_torch:
                 model.load_state_dict(torch.load(model_path))
             else:
                 model(x[:1])
                 model.load_weights(model_path)
-            print(f'Loaded model #{i} with {in_indices[-1].sum()} examples.')
+            print(
+                f'\nLoaded shadow model #{i} with {in_indices[-1].sum()} examples.')
 
         else:
             tdata.train_data = x[in_indices[-1]]
@@ -59,14 +57,14 @@ def get_shadow_stats(model, tdata, is_torch=False):
             print(f'Trained model #{i} with {in_indices[-1].sum()} examples.')
 
         s, l = get_stat_and_loss_aug(
-            model, x, y, sample_weight, is_torch=is_torch)
-
+            model, x, y, is_torch=is_torch)
         stat.append(s)
         losses.append(l)
-        tf.keras.backend.clear_session()
-        gc.collect()
 
-    return AdvAttackData(
+    tf.keras.backend.clear_session()
+    gc.collect()
+
+    return ShadowStats(
         stat=stat,
         in_indices=in_indices,
         sample_weight=sample_weight,
@@ -75,29 +73,36 @@ def get_shadow_stats(model, tdata, is_torch=False):
     )
 
 
-def run_advanced_attack(attack_data):
-    for idx in range(aconf['n_shadows']):
-        print(f'\nTarget model is #{idx}')
-        stat_target = attack_data.stat[idx]
-        in_indices_target = attack_data.in_indices[idx]
-        stat_shadow = np.array(
-            attack_data.stat[:idx] + attack_data.stat[idx + 1:])
-        in_indices_shadow = np.array(
-            attack_data.in_indices[:idx] + attack_data.in_indices[idx + 1:])
-        stat_in = [stat_shadow[:, j][in_indices_shadow[:, j]]
-                   for j in range(attack_data.n)]
-        stat_out = [stat_shadow[:, j][~in_indices_shadow[:, j]]
-                    for j in range(attack_data.n)]
+def run_advanced_attack(model, tdata, is_torch):
+    shdata = get_shadow_stats(model, tdata, is_torch)
 
-        # Computing LiRA gaussian
-        scores = amia.compute_score_lira(
-            stat_target, stat_in, stat_out, fix_variance=True)
+    stat_target_train, loss_target_train = get_stat_and_loss_aug(
+        model, tdata.train_data, tdata.train_labels, is_torch=is_torch)
+    stat_target_test, loss_target_test = get_stat_and_loss_aug(
+        model, tdata.test_data, tdata.test_labels, is_torch=is_torch)
+
+    train_len = stat_target_train.shape[0]
+    test_len = stat_target_test.shape[0]
+
+    for idx in range(aconf['n_shadows']):
+        stat_shadow = np.array(shdata.stat[:idx] + shdata.stat[idx + 1:])
+        in_indices_shadow = np.array(
+            shdata.in_indices[:idx] + shdata.in_indices[idx + 1:])
+        stat_in = [stat_shadow[:, j][in_indices_shadow[:, j]]
+                   for j in range(shdata.n)]
+        stat_out = [stat_shadow[:, j][~in_indices_shadow[:, j]]
+                    for j in range(shdata.n)]
+
+        scores_in = amia.compute_score_lira(
+            stat_target_train, stat_in[:train_len], stat_out[:train_len], fix_variance=True)
+        scores_out = amia.compute_score_lira(
+            stat_target_test, stat_in[:test_len], stat_out[:test_len], fix_variance=True)
 
         attack_input = AttackInputData(
-            loss_train=scores[in_indices_target],
-            loss_test=scores[~in_indices_target],
-            sample_weight_train=attack_data.sample_weight,
-            sample_weight_test=attack_data.sample_weight)
+            loss_train=scores_in,
+            loss_test=scores_out,
+            sample_weight_train=shdata.sample_weight,
+            sample_weight_test=shdata.sample_weight)
         result_lira = mia.run_attacks(attack_input).single_attack_results[0]
 
         print('\nLiRA attack with Gaussian:',
@@ -105,9 +110,14 @@ def run_advanced_attack(attack_data):
               f'adv = {result_lira.get_attacker_advantage():.4f}')
 
         # Computing LiRA offset
-        scores = -amia.compute_score_offset(stat_target, stat_in, stat_out)
-        attack_input.loss_train = scores[in_indices_target]
-        attack_input.loss_test = scores[~in_indices_target]
+        scores_in = - \
+            amia.compute_score_offset(
+                stat_target_train, stat_in[:train_len], stat_out[:train_len])
+        scores_out = - \
+            amia.compute_score_offset(
+                stat_target_test, stat_in[:test_len], stat_out[:test_len])
+        attack_input.loss_train = scores_in
+        attack_input.loss_test = scores_out
 
         result_offset = mia.run_attacks(attack_input).single_attack_results[0]
 
@@ -116,9 +126,8 @@ def run_advanced_attack(attack_data):
               f'adv = {result_offset.get_attacker_advantage():.4f}')
 
         # Computing LiRA baseline
-        loss_target = attack_data.losses[idx][:, 0]
-        attack_input.loss_train = loss_target[in_indices_target]
-        attack_input.loss_test = loss_target[~in_indices_target]
+        attack_input.loss_train = loss_target_train.flatten()
+        attack_input.loss_test = loss_target_test.flatten()
 
         result_baseline = mia.run_attacks(
             attack_input).single_attack_results[0]

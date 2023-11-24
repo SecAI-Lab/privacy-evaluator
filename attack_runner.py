@@ -47,8 +47,7 @@ def runner(args):
         run_custom_attacks(attack_input)
 
     elif attack == 'lira':
-        adata = get_shadow_stats(model, tdata, is_torch)
-        run_advanced_attack(adata)
+        run_advanced_attack(model, tdata, is_torch)
 
     elif attack == 'population':
         run_population_metric(tdata, model, is_torch)

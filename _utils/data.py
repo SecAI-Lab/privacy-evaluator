@@ -4,7 +4,7 @@ import numpy as np
 
 
 @dataclass
-class AdvAttackData:
+class ShadowStats:
     stat: list
     in_indices: list
     losses: list

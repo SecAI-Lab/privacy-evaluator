@@ -59,18 +59,18 @@ def get_stat_and_loss_aug(model,
 
     losses, stat = [], []
     print('Computing stats from loss and logits....')
-    for data in [x, x[:, :, ::-1, :]]:
-        if is_torch:
-            logits = torch_predict(model, data.copy())
-        else:
-            logits = model.predict(data, batch_size=batch_size)
-        prob = amia.convert_logit_to_prob(logits)
-        losses.append(utils.log_loss(
-            y, prob, sample_weight=sample_weight))
 
-        stat.append(
-            amia.calculate_statistic(
-                prob, y, sample_weight=sample_weight, is_logits=False))
+    if is_torch:
+        logits = torch_predict(model, x)
+    else:
+        logits = model.predict(x, batch_size=batch_size)
+    prob = amia.convert_logit_to_prob(logits)
+    losses.append(utils.log_loss(
+        y, prob, sample_weight=sample_weight))
+
+    stat.append(
+        amia.calculate_statistic(
+            prob, y, sample_weight=sample_weight, is_logits=False))
 
     return np.vstack(stat.copy()).transpose(1, 0), np.vstack(losses.copy()).transpose(1, 0)
 
