@@ -55,7 +55,7 @@ def get_shadow_stats(model, tdata, is_torch=False):
             if is_torch:
                 torch_train(model, tdata, model_path)
             else:
-                train(model_path, tdata=tdata, model=model)
+                train(model_path, tdata=tdata, pretrained=model)
             print(f'Trained model #{i} with {in_indices[-1].sum()} examples.')
 
         s, l = get_stat_and_loss_aug(

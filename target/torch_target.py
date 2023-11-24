@@ -68,9 +68,12 @@ def torch_predict(model, dataset):
     return logits
 
 
-def torch_train(model, dataset, checkpoint_path=None):
+def torch_train(model, dataset=None, checkpoint_path=None):
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=aconf['lr'])
+
+    if dataset is None:
+        dataset = load_torch_cifar10()
 
     train_loader = DataLoader(group_data(
         dataset.train_data, dataset.train_labels), batch_size=aconf['batch_size'], shuffle=True)

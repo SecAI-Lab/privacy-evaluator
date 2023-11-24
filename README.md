@@ -12,6 +12,11 @@
 
 > Note, the pretrained model should be saved as a whole, not only `state_dict` format which requires model initialization!
 
+If no target model exist then train it first with or without Differential Privacy:
+
+    $ python main.py --model_path /path/to/model --train True 
+
+
 For `lira attacks` you can change the config file in `attacks/config.py`
 
     aconf = {

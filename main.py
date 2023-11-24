@@ -9,11 +9,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
-    mpath = 'target/weights/cifar10.h5'
     parser = argparse.ArgumentParser(
         description='Arguments for attack configuration.')
-    parser.add_argument('--model_path', default=mpath,
+    parser.add_argument('--model_path', default='target/weights/cifar10.h5',
                         help='Absolute path where pretrained model is saved')
+    parser.add_argument('--train', default=False,
+                        help='If no target model passed, train it with Cifar10 first')
+    parser.add_argument('--dp_on', default=False,
+                        help='Train with Differential Privacy (now only for Tensorflow models)')
     parser.add_argument('--attack', default='custom',
                         help='Attack type: "custom" | "lira" | "population" | "reference" | "shadow" ')
     args = parser.parse_args()

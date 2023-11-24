@@ -1,11 +1,13 @@
+import tensorflow_privacy
+from tensorflow_privacy.privacy.analysis import compute_dp_sgd_privacy
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.models import Model
 import tensorflow as tf
 import numpy as np
 
-from attacks.config import aconf
 from _utils.data import TData
+from target.config import *
 
 """Test file for preparing TF model"""
 
@@ -65,26 +67,43 @@ def densenet(num_classes):
     return model
 
 
-def train(checkpoint_path, tdata=None, model=None):
+def train(checkpoint_path, tdata=None, pretrained=None, with_dp=False):
     optimizer = tf.keras.optimizers.SGD(
-        learning_rate=aconf['lr'], momentum=0.9)
+        learning_rate=learning_rate, momentum=0.9)
+
+    if with_dp:
+        print("Train with Differential Privacy ...")
+        optimizer = tensorflow_privacy.DPKerasSGDOptimizer(
+            l2_norm_clip=l2_norm_clip,
+            noise_multiplier=noise_multiplier,
+            num_microbatches=num_microbatches,
+            learning_rate=learning_rate)
 
     if tdata is None:
         tdata = load_tf_cifar10()
 
-    if model is None:
+    if pretrained is None:
         model = densenet(num_classes=10)
         optimizer = tf.keras.optimizers.Adam()
+    else:
+        model = pretrained
 
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-    model.fit(tdata.train_data, tdata.train_labels,
-              validation_data=(tdata.test_data, tdata.test_labels),
-              batch_size=aconf['batch_size'],
-              epochs=aconf['epochs'])
 
-    if model == None:
+    if isinstance(tdata.train_data, tf.data.Dataset):
+        model.fit(tdata.train_data,
+                  validation_data=tdata.test_data,
+                  batch_size=batch_size,
+                  epochs=epochs)
+    else:
+        model.fit(tdata.train_data, tdata.train_labels,
+                  validation_data=(tdata.test_data, tdata.test_labels),
+                  batch_size=batch_size,
+                  epochs=epochs)
+
+    if pretrained is None:
         print("Saving whole model...")
         model.save(checkpoint_path)
     else:

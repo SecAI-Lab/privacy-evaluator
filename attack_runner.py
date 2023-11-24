@@ -10,6 +10,14 @@ def runner(args):
     attack = args.attack
     is_torch = False
 
+    if args.train:
+        if mpath.endswith('.h5'):
+            from target.tf_target import train
+            train(checkpoint_path=mpath, with_dp=args.dp_on)
+        else:
+            from target.torch_target import torch_train
+            torch_train(checkpoint_path=mpath)
+
     if not os.path.exists(mpath):
         raise FileExistsError("Model path doesn't exist!")
 
