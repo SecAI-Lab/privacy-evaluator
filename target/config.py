@@ -3,4 +3,4 @@ noise_multiplier = 1.3
 num_microbatches = 250
 learning_rate = 0.25
 batch_size = 64
-epochs = 20
+epochs = 10

@@ -89,7 +89,6 @@ def train(checkpoint_path, tdata=None, pretrained=None, with_dp=False):
         model = pretrained
 
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
     if isinstance(tdata.train_data, tf.data.Dataset):
@@ -103,9 +102,5 @@ def train(checkpoint_path, tdata=None, pretrained=None, with_dp=False):
                   batch_size=batch_size,
                   epochs=epochs)
 
-    if pretrained is None:
-        print("Saving whole model...")
-        model.save(checkpoint_path)
-    else:
-        print("Saving model weights...")
-        model.save_weights(checkpoint_path)
+    print("Saving whole model...")
+    model.save(checkpoint_path)

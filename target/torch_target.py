@@ -78,7 +78,7 @@ def torch_train(model, dataset=None, checkpoint_path=None):
     train_loader = DataLoader(group_data(
         dataset.train_data, dataset.train_labels), batch_size=aconf['batch_size'], shuffle=True)
 
-    for _ in range(aconf['epochs']):
+    for epoch in range(aconf['epochs']):
         train_loss = 0
         train_acc = 0
         for x, y in tqdm(train_loader):
@@ -95,8 +95,8 @@ def torch_train(model, dataset=None, checkpoint_path=None):
             train_loss += loss.item() * x.size(0)
             train_acc += torch.sum(preds == y.data)
 
-        print('train acc: {:.4f}, loss: {:.4f}'.format(
+        print('epoch: {epoch}, accuracy: {:.4f}, loss: {:.4f}'.format(
             train_acc / len(train_loader.dataset), train_loss / len(train_loader.dataset)))
 
     if checkpoint_path is not None:
-        torch.save(model.state_dict(), checkpoint_path)
+        torch.save(model, checkpoint_path)

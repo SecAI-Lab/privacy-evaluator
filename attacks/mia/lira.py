@@ -30,17 +30,15 @@ def get_shadow_stats(model, tdata, is_torch=False):
         ext = 'pt'
 
     for i in range(aconf['n_shadows']):
-        in_indices.append(np.random.binomial(1, 0.5, n).astype(bool))
-        model_path = os.path.join(
+        in_indices.append(np.random.binomial(1, 0.8, n).astype(bool))
+        shadow_path = os.path.join(
             aconf['shpath'],  f'model{i}_e{aconf["epochs"]}_sd{seed}.{ext}'
         )
-        # TODO: change model loading without initilization
-        if os.path.exists(model_path):
+        if os.path.exists(shadow_path):
             if is_torch:
-                model.load_state_dict(torch.load(model_path))
+                model = torch.load(shadow_path)
             else:
-                model(x[:1])
-                model.load_weights(model_path)
+                model = tf.keras.models.load_model(shadow_path)
             print(
                 f'\nLoaded shadow model #{i} with {in_indices[-1].sum()} examples.')
 
@@ -50,11 +48,13 @@ def get_shadow_stats(model, tdata, is_torch=False):
             tdata.test_data = x[~in_indices[-1]]
             tdata.test_labels = y[~in_indices[-1]]
 
+            print(
+                f'Training shadow model #{i} with {in_indices[-1].sum()} examples.')
+
             if is_torch:
-                torch_train(model, tdata, model_path)
+                torch_train(model, tdata, shadow_path)
             else:
-                train(model_path, tdata=tdata, pretrained=model)
-            print(f'Trained model #{i} with {in_indices[-1].sum()} examples.')
+                train(shadow_path, tdata=tdata)
 
         s, l = get_stat_and_loss_aug(
             model, x, y, is_torch=is_torch)
@@ -105,7 +105,8 @@ def run_advanced_attack(model, tdata, is_torch):
             sample_weight_test=shdata.sample_weight)
         result_lira = mia.run_attacks(attack_input).single_attack_results[0]
 
-        print('\nLiRA attack with Gaussian:',
+        print('\nResults with shadow ', idx)
+        print('LiRA attack with Gaussian:',
               f'auc = {result_lira.get_auc():.4f}',
               f'adv = {result_lira.get_attacker_advantage():.4f}')
 
@@ -121,7 +122,7 @@ def run_advanced_attack(model, tdata, is_torch):
 
         result_offset = mia.run_attacks(attack_input).single_attack_results[0]
 
-        print('\nLiRA attack with offset:',
+        print('LiRA attack with offset:',
               f'auc = {result_offset.get_auc():.4f}',
               f'adv = {result_offset.get_attacker_advantage():.4f}')
 
@@ -132,6 +133,6 @@ def run_advanced_attack(model, tdata, is_torch):
         result_baseline = mia.run_attacks(
             attack_input).single_attack_results[0]
 
-        print('\nLiRA baseline attack:',
+        print('LiRA baseline attack:',
               f'auc = {result_baseline.get_auc():.4f}',
               f'adv = {result_baseline.get_attacker_advantage():.4f}')

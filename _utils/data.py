@@ -13,6 +13,14 @@ class ShadowStats:
 
 
 @dataclass
+class ShData:
+    train_data: Optional[Any] = None
+    train_labels: Optional[Any] = None
+    test_data: Optional[Any] = None
+    test_labels: Optional[Any] = None
+
+
+@dataclass
 class TData:
     train_data: Optional[Any] = None
     train_labels: Optional[Any] = None
