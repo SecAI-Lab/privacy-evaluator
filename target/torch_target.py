@@ -95,8 +95,10 @@ def torch_train(model, dataset=None, checkpoint_path=None):
             train_loss += loss.item() * x.size(0)
             train_acc += torch.sum(preds == y.data)
 
-        print('epoch: {epoch}, accuracy: {:.4f}, loss: {:.4f}'.format(
-            train_acc / len(train_loader.dataset), train_loss / len(train_loader.dataset)))
+        print('epoch: {}, accuracy: {:.4f}, loss: {:.4f}'.format(epoch,
+                                                                 train_acc /
+                                                                 len(train_loader.dataset),
+                                                                 train_loss / len(train_loader.dataset)))
 
     if checkpoint_path is not None:
         torch.save(model, checkpoint_path)
