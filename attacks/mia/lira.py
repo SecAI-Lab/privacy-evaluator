@@ -34,27 +34,19 @@ def get_shadow_stats(model, tdata, is_torch=False):
         shadow_path = os.path.join(
             aconf['shpath'],  f'model{i}_e{aconf["epochs"]}_sd{seed}.{ext}'
         )
-        if os.path.exists(shadow_path):
-            if is_torch:
-                model = torch.load(shadow_path)
-            else:
-                model = tf.keras.models.load_model(shadow_path)
-            print(
-                f'\nLoaded shadow model #{i} with {in_indices[-1].sum()} examples.')
 
+        tdata.train_data = x[in_indices[-1]]
+        tdata.train_labels = y[in_indices[-1]]
+        tdata.test_data = x[~in_indices[-1]]
+        tdata.test_labels = y[~in_indices[-1]]
+
+        print(
+            f'Training shadow model #{i} with {in_indices[-1].sum()} examples.')
+
+        if is_torch:
+            torch_train(model, tdata, shadow_path)
         else:
-            tdata.train_data = x[in_indices[-1]]
-            tdata.train_labels = y[in_indices[-1]]
-            tdata.test_data = x[~in_indices[-1]]
-            tdata.test_labels = y[~in_indices[-1]]
-
-            print(
-                f'Training shadow model #{i} with {in_indices[-1].sum()} examples.')
-
-            if is_torch:
-                torch_train(model, tdata, shadow_path)
-            else:
-                train(shadow_path, tdata=tdata)
+            train(shadow_path, tdata=tdata)
 
         s, l = get_stat_and_loss_aug(
             model, x, y, is_torch=is_torch)
