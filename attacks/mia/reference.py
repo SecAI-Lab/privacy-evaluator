@@ -26,7 +26,7 @@ def run_reference_metric(tdata, model, is_torch):
         if reference.endswith(suff):
             fpath = pm['ref_models'] + reference
             if is_torch:
-                model.load_state_dict(torch.load(fpath))
+                model = torch.load(fpath)
                 ref_models.append(WrapperTorch(
                     model_obj=model, loss_fn=pm['torch_loss']))
             else:

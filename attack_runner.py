@@ -8,6 +8,7 @@ np.random.seed(1234)
 def runner(args):
     mpath = args.model_path
     attack = args.attack
+    n_class = args.n_class
     is_torch = False
 
     if args.train:
@@ -24,23 +25,26 @@ def runner(args):
     if mpath.endswith('.h5'):
         import tensorflow as tf
         model = tf.keras.models.load_model(mpath, compile=False)
-    elif mpath.endswith('.pt'):
+    elif mpath.endswith('.pt') or mpath.endswith('.pth'):
         model = torch.load(mpath)
+        if isinstance(model, dict):
+            print("Model state dict passed! Need a whole model object.")
+            exit(0)
         is_torch = True
 
     from _utils.helper import get_attack_inp
     from attacks.mia.custom import run_custom_attacks
-    from attacks.mia.lira import get_shadow_stats, run_advanced_attack
+    from attacks.mia.lira import run_advanced_attack
     from attacks.mia.population import run_population_metric
     from attacks.mia.reference import run_reference_metric
     from attacks.mia.shadow import run_shadow_metric
-    from target.tf_target import load_tf_cifar10
-    from target.torch_target import load_torch_cifar10
+    from target.tf_target import load_tf_cifar
+    from target.torch_target import load_torch_cifar
 
     if is_torch:
-        tdata = load_torch_cifar10()
+        tdata = load_torch_cifar(num_class=n_class)
     else:
-        tdata = load_tf_cifar10()
+        tdata = load_tf_cifar(num_class=n_class)
 
     if attack == 'custom':
         attack_input = get_attack_inp(model, tdata, is_torch)

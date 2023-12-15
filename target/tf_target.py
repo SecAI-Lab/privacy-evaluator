@@ -18,9 +18,13 @@ def process_images(image, label):
     return image, label
 
 
-def load_tf_cifar10():
-    (train_data, train_labels), (test_data,
-                                 test_labels) = tf.keras.datasets.cifar10.load_data()
+def load_tf_cifar(num_class):
+    if num_class == 10:
+        (train_data, train_labels), (test_data,
+                                     test_labels) = tf.keras.datasets.cifar10.load_data()
+    elif num_class == 100:
+        (train_data, train_labels), (test_data,
+                                     test_labels) = tf.keras.datasets.cifar100.load_data()
 
     x = np.concatenate([train_data, test_data]).astype(np.float32) / 255
     y = np.concatenate([train_labels, test_labels]).astype(np.int32).squeeze()
@@ -67,7 +71,7 @@ def densenet(num_classes):
     return model
 
 
-def train(checkpoint_path, tdata=None, pretrained=None, with_dp=False):
+def train(checkpoint_path, num_class, tdata=None, pretrained=None, with_dp=False):
     optimizer = tf.keras.optimizers.SGD(
         learning_rate=learning_rate, momentum=0.9)
 
@@ -80,10 +84,10 @@ def train(checkpoint_path, tdata=None, pretrained=None, with_dp=False):
             learning_rate=learning_rate)
 
     if tdata is None:
-        tdata = load_tf_cifar10()
+        tdata = load_tf_cifar(num_class)
 
     if pretrained is None:
-        model = densenet(num_classes=10)
+        model = densenet(num_class)
         optimizer = tf.keras.optimizers.Adam()
     else:
         model = pretrained

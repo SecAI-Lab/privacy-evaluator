@@ -6,7 +6,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 aconf = {
     'lr': 0.01,
     'batch_size': 64,
-    'epochs': 20,
+    'epochs': 10,
     'n_shadows': 2,
     'shpath': './attacks/shadows'
 }

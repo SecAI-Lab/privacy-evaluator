@@ -3,7 +3,6 @@ from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_s
 from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack import advanced_mia as amia
 import tensorflow as tf
 import numpy as np
-import torch
 import os
 import gc
 
@@ -17,7 +16,7 @@ seed = 123
 np.random.seed(seed)
 
 
-def get_shadow_stats(model, tdata, is_torch=False):
+def get_shadow_stats(model, num_class, tdata, is_torch=False):
     x = tdata.x_concat
     y = tdata.y_concat
     n = x.shape[0]
@@ -44,12 +43,12 @@ def get_shadow_stats(model, tdata, is_torch=False):
             f'Training shadow model #{i} with {in_indices[-1].sum()} examples.')
 
         if is_torch:
-            torch_train(model, tdata, shadow_path)
+            torch_train(model, num_class, tdata, shadow_path)
         else:
-            train(shadow_path, tdata=tdata)
+            train(shadow_path, num_class=num_class, tdata=tdata)
 
         s, l = get_stat_and_loss_aug(
-            model, x, y, is_torch=is_torch)
+            model, x, y, num_class, is_torch=is_torch)
         stat.append(s)
         losses.append(l)
 
@@ -65,8 +64,8 @@ def get_shadow_stats(model, tdata, is_torch=False):
     )
 
 
-def run_advanced_attack(model, tdata, is_torch):
-    shdata = get_shadow_stats(model, tdata, is_torch)
+def run_advanced_attack(model, num_class, tdata, is_torch):
+    shdata = get_shadow_stats(model, num_class, tdata, is_torch)
 
     stat_target_train, loss_target_train = get_stat_and_loss_aug(
         model, tdata.train_data, tdata.train_labels, is_torch=is_torch)

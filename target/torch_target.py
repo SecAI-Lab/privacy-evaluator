@@ -1,5 +1,5 @@
 import torchvision.transforms as transforms
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
@@ -27,7 +27,7 @@ def group_data(data, label):
     return gr_data
 
 
-def load_torch_cifar10():
+def load_torch_cifar(num_class=10):
     transform = transforms.Compose(
         [
             transforms.Resize((224, 224)),
@@ -35,11 +35,19 @@ def load_torch_cifar10():
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ]
     )
-    trainset = CIFAR10(root='./data', train=True,
-                       download=True, transform=transform)
 
-    testset = CIFAR10(root='./data', train=False,
-                      download=True, transform=transform)
+    if num_class == 10:
+        trainset = CIFAR10(root='./data', train=True,
+                           download=True, transform=transform)
+
+        testset = CIFAR10(root='./data', train=False,
+                          download=True, transform=transform)
+    else:
+        trainset = CIFAR100(root='./data', train=True,
+                            download=True, transform=transform)
+
+        testset = CIFAR100(root='./data', train=False,
+                           download=True, transform=transform)
 
     x, y = ds_to_numpy(trainset, testset)
 
@@ -57,10 +65,12 @@ def torch_predict(model, dataset):
     logits = []
     data_loader = DataLoader(dataset, batch_size=aconf['batch_size'])
     model.eval()
+
     for x in tqdm(data_loader):
         x = x.to(device)
         if x.shape[0] > 3:
             x = torch.transpose(x, 1, -1)
+
         pred = model(x.float())
         pred = pred.cpu().detach().numpy().copy()
         logits.append(pred)
@@ -68,12 +78,12 @@ def torch_predict(model, dataset):
     return logits
 
 
-def torch_train(model, dataset=None, checkpoint_path=None):
+def torch_train(model, num_class, dataset=None, checkpoint_path=None):
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=aconf['lr'])
 
     if dataset is None:
-        dataset = load_torch_cifar10()
+        dataset = load_torch_cifar(num_class)
 
     train_loader = DataLoader(group_data(
         dataset.train_data, dataset.train_labels), batch_size=aconf['batch_size'], shuffle=True)
@@ -84,6 +94,7 @@ def torch_train(model, dataset=None, checkpoint_path=None):
         for x, y in tqdm(train_loader):
             x = torch.transpose(x, 1, -1).to(device)
             y = y.type(torch.LongTensor).to(device)
+
             optimizer.zero_grad()
             pred = model(x)
             loss = criterion(pred, y)

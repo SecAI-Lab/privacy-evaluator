@@ -17,6 +17,8 @@ if __name__ == '__main__':
                         help='If no target model passed, train it with Cifar10 first')
     parser.add_argument('--dp_on', default=False,
                         help='Train with Differential Privacy (now only for Tensorflow models)')
+    parser.add_argument('--n_class', default=10,
+                        help='Number of classes of train data')
     parser.add_argument('--attack', default='custom',
                         help='Attack type: "custom" | "lira" | "population" | "reference" | "shadow" ')
     args = parser.parse_args()

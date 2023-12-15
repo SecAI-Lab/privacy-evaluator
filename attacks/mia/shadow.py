@@ -22,7 +22,7 @@ def run_shadow_metric(tdata, model, is_torch):
     for shadow in shadow_path:
         fpath = pm['ref_models'] + shadow
         if is_torch and fpath.endswith('.pt'):
-            model.load_state_dict(torch.load(fpath))
+            model = torch.load(fpath)
             shadow_models.append(WrapperTorch(
                 model_obj=model, loss_fn=pm['torch_loss']))
 
