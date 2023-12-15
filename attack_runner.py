@@ -8,7 +8,7 @@ np.random.seed(1234)
 def runner(args):
     mpath = args.model_path
     attack = args.attack
-    n_class = args.n_class
+    n_class = int(args.n_class)
     is_torch = False
 
     if args.train:
@@ -51,16 +51,16 @@ def runner(args):
         run_custom_attacks(attack_input)
 
     elif attack == 'lira':
-        run_advanced_attack(model, tdata, is_torch)
+        run_advanced_attack(model, n_class, tdata, is_torch)
 
     elif attack == 'population':
-        run_population_metric(tdata, model, is_torch)
+        run_population_metric(tdata, model, n_class, is_torch)
 
     elif attack == 'reference':
-        run_reference_metric(tdata, model, is_torch)
+        run_reference_metric(tdata, model, n_class, is_torch)
 
     elif attack == 'shadow':
-        run_shadow_metric(tdata, model, is_torch)
+        run_shadow_metric(tdata, model, n_class, is_torch)
 
     else:
         raise NotImplementedError('The other type of attacks not implemented!')

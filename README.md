@@ -3,14 +3,16 @@
 
 ### For Tensorflow (.h5) and Pytorch (.pt) Models
 
-`Must have Python version >= 3.9`  and  `install tensorflow_privacy library`
+`Must have Python version >= 3.9`  and  `install -r requirements.txt`
     
-    Arguments for running  `main.py`
+Arguments for running  `main.py` for attacks:
     
     --model_path  | MODEL_PATH  Absolute path where pretrained model is saved                            
     --attack      | ATTACK      Attack type: "custom" | "lira" | "population" | "reference" | "shadow"
+    --n_class     | N_CLASS     Number of classes of target model dataset, default is 10 (for Cifar10). Pass 100    
+                                for Cifar100 data and target model trained with this data.
 
-> Note, the pretrained model should be saved as a whole, not only `state_dict` format which requires model initialization!
+### `Important! The pretrained model should be saved as a whole model object, not as state_dict format which requires model initialization.`
 
 If no target model exist then train it first with or without Differential Privacy:
 
@@ -29,8 +31,7 @@ For `lira attacks` you can change the config file in `attacks/config.py`
 
 For `population` and `reference` metric attacks same config file as above but:
 
-    priv_meter = {
-        'num_classes': 10,
+    priv_meter = {        
         'num_train_points': 10000,
         'num_test_points': 10000,
         'epochs': 10,

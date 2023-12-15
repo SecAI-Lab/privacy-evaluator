@@ -75,7 +75,7 @@ def get_stat_and_loss_aug(model,
     return np.vstack(stat.copy()).transpose(1, 0), np.vstack(losses.copy()).transpose(1, 0)
 
 
-def get_trg_ref_data(tdata, population=False):
+def get_trg_ref_data(tdata, num_class, population=False):
     x_train_all = tdata.train_data
     x_test_all = tdata.test_data
 
@@ -86,9 +86,9 @@ def get_trg_ref_data(tdata, population=False):
             [data for data, _ in tdata.test_data], axis=0)
 
     y_train_all = tf.keras.utils.to_categorical(
-        tdata.train_labels, pm['num_classes'])
+        tdata.train_labels, num_class)
     y_test_all = tf.keras.utils.to_categorical(
-        tdata.test_labels, pm['num_classes'])
+        tdata.test_labels, num_class)
 
     x_train, y_train = x_train_all[:pm['num_train_points']
                                    ], y_train_all[:pm['num_train_points']]

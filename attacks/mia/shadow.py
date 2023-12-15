@@ -9,8 +9,8 @@ from _utils.helper import get_trg_ref_data
 from attacks.config import priv_meter as pm
 
 
-def run_shadow_metric(tdata, model, is_torch):
-    target_dataset = get_trg_ref_data(tdata)
+def run_shadow_metric(tdata, model, num_class, is_torch):
+    target_dataset = get_trg_ref_data(tdata, num_class=num_class)
     shadow_path = os.listdir(pm['ref_models'])
     shadow_models = []
 

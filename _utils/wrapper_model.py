@@ -31,6 +31,7 @@ class WrapperTorch(PytorchModel):
         logits = self.get_logits(batch_samples)
         logits = torch.from_numpy(logits)
         batch_labels = torch.from_numpy(batch_labels)
+        print(logits.shape, batch_labels.shape)
         loss = self.loss_fn(logits, batch_labels)
         return loss.cpu().detach().numpy()
         # super().get_loss(batch_samples.float(), batch_labels.float(), per_point)

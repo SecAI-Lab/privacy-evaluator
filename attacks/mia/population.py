@@ -7,9 +7,9 @@ from _utils.helper import get_trg_ref_data
 from attacks.config import priv_meter as pm
 
 
-def run_population_metric(tdata, model, is_torch):
+def run_population_metric(tdata, model, num_class, is_torch):
     target_dataset, reference_dataset = get_trg_ref_data(
-        tdata, population=True)
+        tdata, num_class, population=True)
     if is_torch:
         target_model = WrapperTorch(
             model_obj=model, loss_fn=pm['torch_loss'])

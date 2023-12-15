@@ -12,7 +12,6 @@ aconf = {
 }
 
 priv_meter = {
-    'num_classes': 10,
     'num_train_points': 10000,
     'num_test_points': 10000,
     'epochs': 10,
