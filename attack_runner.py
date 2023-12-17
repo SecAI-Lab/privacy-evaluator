@@ -28,8 +28,12 @@ def runner(args):
     elif mpath.endswith('.pt') or mpath.endswith('.pth'):
         model = torch.load(mpath)
         if isinstance(model, dict):
-            print("Model state dict passed! Need a whole model object.")
-            exit(0)
+            print(model.keys())
+            if isinstance(model.get('state'), dict):
+                print("Model state dict passed! Need a whole model object.")
+                exit(0)
+            else:
+                model = model['state']
         is_torch = True
 
     from _utils.helper import get_attack_inp

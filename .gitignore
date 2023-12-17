@@ -6,3 +6,5 @@ weights
 shadows
 env
 *.pt
+densnet.py
+resnet.py

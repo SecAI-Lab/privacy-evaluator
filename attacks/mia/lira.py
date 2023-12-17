@@ -48,7 +48,7 @@ def get_shadow_stats(model, num_class, tdata, is_torch=False):
             train(shadow_path, num_class=num_class, tdata=tdata)
 
         s, l = get_stat_and_loss_aug(
-            model, x, y, num_class, is_torch=is_torch)
+            model, x, y, is_torch=is_torch)
         stat.append(s)
         losses.append(l)
 

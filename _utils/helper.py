@@ -65,6 +65,7 @@ def get_stat_and_loss_aug(model,
     else:
         logits = model.predict(x, batch_size=batch_size)
     prob = amia.convert_logit_to_prob(logits)
+
     losses.append(utils.log_loss(
         y, prob, sample_weight=sample_weight))
 
