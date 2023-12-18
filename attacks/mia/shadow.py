@@ -7,6 +7,7 @@ import os
 from _utils.wrapper_model import WrapperTF, WrapperTorch
 from _utils.helper import get_trg_ref_data
 from attacks.config import priv_meter as pm
+from attacks.config import device
 
 
 def run_shadow_metric(tdata, model, num_class, is_torch):
@@ -24,12 +25,12 @@ def run_shadow_metric(tdata, model, num_class, is_torch):
         if is_torch and fpath.endswith('.pt'):
             model = torch.load(fpath)
             shadow_models.append(WrapperTorch(
-                model_obj=model, loss_fn=pm['torch_loss']))
+                model_obj=model.to(device), loss_fn=pm['torch_loss']))
 
         elif not is_torch and fpath.endswith('.h5'):
             model.load_weights(fpath)
             shadow_models.append(
-                WrapperTF(model_obj=model, loss_fn=pm['tf_loss']))
+                WrapperTF(model_obj=model.to(device), loss_fn=pm['tf_loss']))
 
     datasets_list = target_dataset.subdivide(
         num_splits=pm['n_shadows'],

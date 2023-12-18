@@ -26,8 +26,7 @@ def run_custom_attacks(attack_input):
         AttackType.THRESHOLD_ENTROPY_ATTACK
     ]
     trained_attacks = [
-        AttackType.LOGISTIC_REGRESSION,
-        # AttackType.RANDOM_FOREST
+        AttackType.LOGISTIC_REGRESSION
     ]
 
     print("\nRunning Metric Attacks .....")

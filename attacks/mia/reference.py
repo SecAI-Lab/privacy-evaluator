@@ -7,6 +7,7 @@ import os
 from _utils.wrapper_model import WrapperTF, WrapperTorch
 from _utils.helper import get_trg_ref_data
 from attacks.config import priv_meter as pm
+from attacks.config import device
 
 
 def run_reference_metric(tdata, model, num_class, is_torch):
@@ -17,7 +18,8 @@ def run_reference_metric(tdata, model, num_class, is_torch):
 
     if is_torch:
         suff = '.pt'
-        target_model = WrapperTorch(model_obj=model, loss_fn=pm['torch_loss'])
+        target_model = WrapperTorch(
+            model_obj=model.to(device), loss_fn=pm['torch_loss'])
     else:
         suff = '.h5'
         target_model = WrapperTF(model_obj=model, loss_fn=pm['tf_loss'])
@@ -28,7 +30,7 @@ def run_reference_metric(tdata, model, num_class, is_torch):
             if is_torch:
                 model = torch.load(fpath)
                 ref_models.append(WrapperTorch(
-                    model_obj=model, loss_fn=pm['torch_loss']))
+                    model_obj=model.to(device), loss_fn=pm['torch_loss']))
             else:
                 model.load_weights(fpath)
                 ref_models.append(
