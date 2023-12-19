@@ -28,7 +28,6 @@ def runner(args):
     elif mpath.endswith('.pt') or mpath.endswith('.pth'):
         model = torch.load(mpath)
         if isinstance(model, dict):
-            print(model.keys())
             if isinstance(model.get('state'), dict):
                 print("Model state dict passed! Need a whole model object.")
                 exit(0)
