@@ -1,4 +1,4 @@
-Repository to combine privacy evaluation, auditing methods.
+## Privacy Risk Assessment tool for Machine Learning Models
 
 
 ### For Tensorflow (.h5) and Pytorch (.pt) Models

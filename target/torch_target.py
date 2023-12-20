@@ -1,110 +1,115 @@
-import tensorflow_privacy
-from tensorflow_privacy.privacy.analysis import compute_dp_sgd_privacy
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-from tensorflow.keras.applications import DenseNet121
-from tensorflow.keras.models import Model
-import tensorflow as tf
+import torchvision.transforms as transforms
+from torchvision.datasets import CIFAR10, CIFAR100
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 import numpy as np
+import torch
 
+from attacks.config import aconf, device
 from _utils.data import TData
-from target.config import *
-
-"""Test file for preparing TF model"""
 
 
-def process_images(image, label):
-    image = tf.image.per_image_standardization(image)
-    image = tf.image.resize(image, (224, 224))
-    return image, label
+def ds_to_numpy(trainset, testset):
+    x_train = trainset.data
+    x_test = testset.data
+    y_train = trainset.targets
+    y_test = testset.targets
+    x = np.concatenate([x_train, x_test]).astype(np.float32) / 255
+    y = np.concatenate([y_train, y_test]).astype(np.int32).squeeze()
+
+    return x, y
 
 
-def load_tf_cifar(num_class):
+def group_data(data, label):
+    gr_data = []
+    for i, j in zip(data, label):
+        gr_data.append([i, j])
+    return gr_data
+
+
+def load_torch_cifar(num_class=10):
+    transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ]
+    )
+
     if num_class == 10:
-        (train_data, train_labels), (test_data,
-                                     test_labels) = tf.keras.datasets.cifar10.load_data()
-    elif num_class == 100:
-        (train_data, train_labels), (test_data,
-                                     test_labels) = tf.keras.datasets.cifar100.load_data()
+        trainset = CIFAR10(root='./data', train=True,
+                           download=True, transform=transform)
 
-    x = np.concatenate([train_data, test_data]).astype(np.float32) / 255
-    y = np.concatenate([train_labels, test_labels]).astype(np.int32).squeeze()
+        testset = CIFAR10(root='./data', train=False,
+                          download=True, transform=transform)
+    else:
+        trainset = CIFAR100(root='./data', train=True,
+                            download=True, transform=transform)
 
-    train_ds = tf.data.Dataset.from_tensor_slices((train_data, train_labels))
-    test_ds = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
-    train_ds_size = tf.data.experimental.cardinality(train_ds).numpy()
-    test_ds_size = tf.data.experimental.cardinality(test_ds).numpy()
+        testset = CIFAR100(root='./data', train=False,
+                           download=True, transform=transform)
 
-    train_ds = (train_ds
-                .map(process_images)
-                .shuffle(buffer_size=train_ds_size)
-                .batch(batch_size=100, drop_remainder=False))
-    test_ds = (test_ds
-               .map(process_images)
-               .shuffle(buffer_size=test_ds_size)
-               .batch(batch_size=10, drop_remainder=False))
-
-    train_labels = train_labels.flatten()
-    test_labels = test_labels.flatten()
+    x, y = ds_to_numpy(trainset, testset)
 
     return TData(
-        train_data=train_ds,
-        train_labels=train_labels,
-        test_data=test_ds,
-        test_labels=test_labels,
+        train_data=trainset.data,
+        test_data=testset.data,
+        train_labels=np.array(trainset.targets),
+        test_labels=np.array(testset.targets),
         x_concat=x,
         y_concat=y
     )
 
 
-def densenet(num_classes):
-    base_model = DenseNet121(weights='imagenet', include_top=False)
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(1024, activation='relu')(x)
-    predictions = Dense(num_classes)(x)
+def torch_predict(model, dataset):
+    logits = []
+    data_loader = DataLoader(dataset, batch_size=aconf['batch_size'])
+    model.eval()
 
-    model = Model(inputs=base_model.input, outputs=predictions)
+    for x in tqdm(data_loader):
+        x = x.to(device)
+        if x.shape[0] > 3:
+            x = torch.transpose(x, 1, -1)
 
-    for layer in base_model.layers:
-        layer.trainable = False
+        pred = model(x.float())
+        pred = pred.cpu().detach().numpy().copy()
+        logits.append(pred)
+    logits = np.concatenate(np.array(logits).copy(), axis=0)
+    return logits
 
-    return model
 
+def torch_train(model, num_class, dataset=None, checkpoint_path=None):
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=aconf['lr'])
 
-def train(checkpoint_path, num_class, tdata=None, pretrained=None, with_dp=False):
-    optimizer = tf.keras.optimizers.SGD(
-        learning_rate=learning_rate, momentum=0.9)
+    if dataset is None:
+        dataset = load_torch_cifar(num_class)
 
-    if with_dp:
-        print("Train with Differential Privacy ...")
-        optimizer = tensorflow_privacy.DPKerasSGDOptimizer(
-            l2_norm_clip=l2_norm_clip,
-            noise_multiplier=noise_multiplier,
-            num_microbatches=num_microbatches,
-            learning_rate=learning_rate)
+    train_loader = DataLoader(group_data(
+        dataset.train_data, dataset.train_labels), batch_size=aconf['batch_size'], shuffle=True)
 
-    if tdata is None:
-        tdata = load_tf_cifar(num_class)
+    for epoch in range(aconf['epochs']):
+        train_loss = 0
+        train_acc = 0
+        for x, y in tqdm(train_loader):
+            x = torch.transpose(x, 1, -1).to(device)
+            y = y.type(torch.LongTensor).to(device)
 
-    if pretrained is None:
-        model = densenet(num_class)
-        optimizer = tf.keras.optimizers.Adam()
-    else:
-        model = pretrained
+            optimizer.zero_grad()
+            pred = model(x)
+            loss = criterion(pred, y)
+            _, preds = torch.max(pred, 1)
 
-    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-    model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+            loss.backward()
+            optimizer.step()
 
-    if isinstance(tdata.train_data, tf.data.Dataset):
-        model.fit(tdata.train_data,
-                  validation_data=tdata.test_data,
-                  batch_size=batch_size,
-                  epochs=epochs)
-    else:
-        model.fit(tdata.train_data, tdata.train_labels,
-                  validation_data=(tdata.test_data, tdata.test_labels),
-                  batch_size=batch_size,
-                  epochs=epochs)
+            train_loss += loss.item() * x.size(0)
+            train_acc += torch.sum(preds == y.data)
 
-    print("Saving whole model...")
-    model.save(checkpoint_path)
+        print('epoch: {}, accuracy: {:.4f}, loss: {:.4f}'.format(epoch,
+                                                                 train_acc /
+                                                                 len(train_loader.dataset),
+                                                                 train_loss / len(train_loader.dataset)))
+
+    if checkpoint_path is not None:
+        torch.save(model, checkpoint_path)
