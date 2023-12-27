@@ -74,7 +74,7 @@ def torch_predict(model, dataset):
         pred = model(x.float())
         pred = pred.cpu().detach().numpy().copy()
         logits.append(pred)
-    logits = np.concatenate(np.array(logits).copy(), axis=0)
+    logits = np.concatenate(np.asarray(logits, dtype="object").copy(), axis=0)
     return logits
 
 

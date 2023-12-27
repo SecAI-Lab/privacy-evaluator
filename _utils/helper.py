@@ -26,11 +26,11 @@ def get_attack_inp(model, tdata, is_torch):
     print('Apply softmax to get probabilities from logits...')
     prob_train = tf.nn.softmax(logits_train, axis=-1)
     prob_test = tf.nn.softmax(logits_test)
-
+    print("prob_train", prob_train.shape)
     print('Compute losses...')
     cce = tf.keras.backend.categorical_crossentropy
     constant = tf.keras.backend.constant
-
+    print('train_labels', tdata.train_labels.shape)
     y_train_onehot = to_categorical(tdata.train_labels)
     y_test_onehot = to_categorical(tdata.test_labels)
 
@@ -38,7 +38,9 @@ def get_attack_inp(model, tdata, is_torch):
         prob_train), from_logits=False).numpy()
     loss_test = cce(constant(y_test_onehot), constant(
         prob_test), from_logits=False).numpy()
-
+    # print('loss_train', loss_train.shape)
+    # print('logits_train', logits_train.shape)
+    # exit(0)
     adata = AttackInputData(
         logits_train=logits_train,
         logits_test=logits_test,
